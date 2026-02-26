@@ -1,7 +1,6 @@
 import ast
 from typing import Dict, Any
 
-
 class CodeAnalyzer(ast.NodeVisitor):
     """
     Custom AST Analyzer that visits nodes
