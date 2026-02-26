@@ -12,6 +12,9 @@ while True:
     print("Running...")
 
 print(score)
+
+def long_function():
+    print("This is a long function.")
 """
 
 class ErrorDetector(ast.NodeVisitor):
@@ -21,6 +24,8 @@ class ErrorDetector(ast.NodeVisitor):
         self.imports = set()
         self.used_imports = set()
         self.infinite_loops = []
+        self.long_functions = []
+        self.function_lengths = {}
 
     # Detect imports
     def visit_Import(self, node):
@@ -52,6 +57,19 @@ class ErrorDetector(ast.NodeVisitor):
 
             if not has_break:
                 self.infinite_loops.append(node.lineno)
+
+        self.generic_visit(node)
+
+    # Detect function length
+    def visit_FunctionDef(self, node):
+        start_line = node.lineno
+        end_line = getattr(node, "end_lineno", start_line)
+        length = end_line - start_line + 1
+
+        self.function_lengths[node.name] = length
+
+        if length > 20:
+            self.long_functions.append((node.name, length, start_line))
 
         self.generic_visit(node)
 
@@ -88,8 +106,18 @@ class ErrorDetector(ast.NodeVisitor):
                 print("  Suggestion:")
                 print("     - Add a 'break' statement inside the loop, OR")
                 print("     - Change the loop condition to a proper terminating condition.\n")
+        
+        # Long Functions
+        if self.long_functions:
+            print("⚠️ LONG FUNCTION(S) DETECTED:\n")
+            for name, length, line in self.long_functions:
+                print(f"• Function '{name}' starting at line {line} is {length} lines long.")
+                print("  Explanation: Very long functions are harder to maintain and debug.")
+                print("  Suggestion:")
+                print("     - Break the function into smaller helper functions.")
+                print("     - Follow the Single Responsibility Principle.\n")
 
-        if not (unused_vars or unused_imports or self.infinite_loops):
+        if not (unused_vars or unused_imports or self.infinite_loops or self.long_functions):
             print("No issues detected!\n")
 
 # Execution
