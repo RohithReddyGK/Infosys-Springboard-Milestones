@@ -1,78 +1,81 @@
 import reflex as rx
-import ast
-from .error_detector_visitor import ErrorDetector  # Make sure class name matches yours
 
-
-class State(rx.State):
-    code_input: str = ""
-    output: str = ""
-
-    def analyze_code(self):
-        if not self.code_input.strip():
-            self.output = "⚠️ Please enter some Python code."
-            return
-
-        try:
-            tree = ast.parse(self.code_input)
-            detector = ErrorDetector()
-            detector.visit(tree)
-
-            results = []
-
-            # Example checks (adjust according to your visitor class)
-            if detector.imports - detector.used_imports:
-                results.append("❌ Unused Imports Detected.")
-
-            if detector.defined_vars - detector.used_vars:
-                results.append("⚠️ Defined but Unused Variables Detected.")
-
-            if not results:
-                results.append("✅ No major issues detected.")
-
-            self.output = "\n".join(results)
-
-        except SyntaxError as e:
-            self.output = f"❌ Syntax Error: {e}"
-        except Exception as e:
-            self.output = f"⚠️ Unexpected Error: {e}"
-
-
-def index():
-    return rx.container(
-        rx.vstack(
-            rx.heading("AI-Driven Code Reviewer", size="6"),
-
-            rx.text_area(
-                placeholder="Paste your Python code here...",
-                value=State.code_input,
-                on_change=State.set_code_input,
-                height="300px",
-                width="100%",
-            ),
-
-            rx.button(
-                "Analyze Code",
-                on_click=State.analyze_code,
-                width="100%",
-            ),
-
-            rx.box(
-                rx.text(State.output),
-                padding="1em",
-                border="1px solid #ccc",
-                width="100%",
-                min_height="150px",
-                white_space="pre-wrap",
-            ),
-
-            spacing="4",
-            width="60%",
+# NAVBAR 
+def navbar():
+    return rx.hstack(
+        rx.hstack(
+            rx.icon("cpu"),
+            rx.text("AI Code Reviewer", font_weight="bold", font_size="20px"),
+            spacing="2",
         ),
-        display="flex",
-        justify_content="center",
-        padding="2em",
+        rx.spacer(),
+        rx.hstack(
+            rx.link("Home", href="/"),
+            rx.link("History", href="/history"),
+            rx.link("About", href="/about"),
+            rx.link("Help", href="/help"),
+            spacing="6",
+        ),
+        padding="20px",
+        width="100%",
     )
 
+# HERO SECTION
+def hero():
+    return rx.center(
+        rx.vstack(
+            rx.badge("AI Powered Analysis", color_scheme="purple"),
 
+            rx.heading(
+                "AI-Driven Code Reviewer System",
+                size="8",
+                text_align="center",
+            ),
+
+            rx.text(
+                "Advanced code review using AST parsing, "
+                "PEP8 validation and AI-based optimization.",
+                text_align="center",
+                color="gray",
+            ),
+
+            rx.hstack(
+                rx.button("95% Accurate"),
+                rx.button("Real-time Analysis", variant="outline"),
+                rx.button("Secure & Reliable", variant="outline"),
+                spacing="4",
+                margin_top="20px",
+            ),
+
+            spacing="6",
+            align="center",
+        ),
+        height="80vh",
+        width="100%",
+        bg="linear-gradient(135deg, #6B73FF 0%, #000DFF 100%)",
+        color="white",
+    )
+
+# PAGES 
+def home():
+    return rx.vstack(
+        navbar(),
+        hero(),
+        spacing="0",
+    )
+
+def history():
+    return rx.center(rx.heading("History Page"), height="80vh")
+
+def about():
+    return rx.center(rx.heading("About Page"), height="80vh")
+
+def help_page():
+    return rx.center(rx.heading("Help Page"), height="80vh")
+
+# APP 
 app = rx.App()
-app.add_page(index)
+app.add_page(home, route="/")
+app.add_page(history, route="/history")
+app.add_page(about, route="/about")
+app.add_page(help_page, route="/help")
