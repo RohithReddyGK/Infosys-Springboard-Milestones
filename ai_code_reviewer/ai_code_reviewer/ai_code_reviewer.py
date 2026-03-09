@@ -1,5 +1,19 @@
 import reflex as rx
 
+# STATE
+class CodeState(rx.State):
+    code_input: str = ""
+    result: str = ""
+
+    def set_code_input(self, value: str):
+        self.code_input = value
+
+    def analyze_code(self):
+        if self.code_input.strip() == "":
+            self.result = "Please paste Python code."
+        else:
+            self.result = "Code analyzed successfully."
+
 # NAVBAR 
 def navbar():
     return rx.hstack(
@@ -11,6 +25,7 @@ def navbar():
         rx.spacer(),
         rx.hstack(
             rx.link("Home", href="/"),
+            rx.link("Analyze Code", href="/analyze"),
             rx.link("History", href="/history"),
             rx.link("About", href="/about"),
             rx.link("Help", href="/help"),
@@ -56,6 +71,52 @@ def hero():
         color="white",
     )
 
+def analyzer_page():
+    return rx.vstack(
+
+        navbar(),
+
+        rx.heading("AI Code Analyzer", size="8"),
+
+        rx.text("Paste your Python code or upload a file to analyze."),
+
+        rx.text_area(
+            placeholder="Paste your code here...",
+            value=CodeState.code_input,
+            on_change=CodeState.set_code_input,
+            width="80%",
+            height="300px",
+        ),
+
+        rx.upload(
+            rx.button("Upload Python File"),
+            border="1px dashed gray",
+            padding="1em",
+        ),
+
+        rx.button(
+            "Analyze Code",
+            on_click=CodeState.analyze_code,
+            color_scheme="blue",
+            margin_top="20px"
+        ),
+
+        rx.divider(),
+
+        rx.heading("Analysis Result", size="6"),
+
+        rx.box(
+            rx.text(CodeState.result),
+            padding="20px",
+            border="1px solid #ccc",
+            width="80%"
+        ),
+
+        align="center",
+        spacing="5",
+        padding="40px"
+    )
+
 # PAGES 
 def home():
     return rx.vstack(
@@ -76,6 +137,7 @@ def help_page():
 # APP 
 app = rx.App()
 app.add_page(home, route="/")
+app.add_page(analyzer_page, route="/analyze")
 app.add_page(history, route="/history")
 app.add_page(about, route="/about")
 app.add_page(help_page, route="/help")
