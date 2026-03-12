@@ -34,7 +34,6 @@ class CodeAnalyzer(ast.NodeVisitor):
         self.feedback.append("Import-from statement detected.")
         self.generic_visit(node)
 
-
 def parse_code(code: str) -> Dict[str, Any]:
 
     result = {

@@ -50,7 +50,6 @@ class ErrorDetector(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-
 def detect_errors(code: str):
 
     try:

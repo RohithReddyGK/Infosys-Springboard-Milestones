@@ -4,11 +4,7 @@ from ai_code_reviewer.code_parser import parse_code
 from ai_code_reviewer.error_detector_visitor import detect_errors
 from ai_code_reviewer.ai_suggestor import get_ai_suggestions
 
-
-# ---------------------------
 # STATE
-# ---------------------------
-
 class CodeState(rx.State):
 
     code_input: str = ""
@@ -53,12 +49,8 @@ class CodeState(rx.State):
 
 {ai_feedback}
 """
-
-
-# ---------------------------
+        
 # NAVBAR
-# ---------------------------
-
 def navbar():
 
     return rx.hstack(
@@ -87,11 +79,7 @@ def navbar():
         border_bottom="1px solid #ddd"
     )
 
-
-# ---------------------------
 # ANALYZER PAGE
-# ---------------------------
-
 def analyzer_page():
 
     return rx.vstack(
@@ -142,11 +130,7 @@ def analyzer_page():
         padding="40px"
     )
 
-
-# ---------------------------
 # HOME PAGE
-# ---------------------------
-
 def home():
 
     return rx.center(
@@ -178,11 +162,7 @@ def home():
         height="80vh"
     )
 
-
-# ---------------------------
 # ABOUT PAGE
-# ---------------------------
-
 def about():
 
     return rx.center(
@@ -205,11 +185,7 @@ def about():
         height="80vh"
     )
 
-
-# ---------------------------
 # APP
-# ---------------------------
-
 app = rx.App()
 
 app.add_page(home, route="/")

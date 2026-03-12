@@ -26,7 +26,6 @@ Code:
 """
 )
 
-
 def get_ai_suggestions(code: str):
 
     try:
