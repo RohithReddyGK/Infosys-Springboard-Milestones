@@ -1,7 +1,16 @@
 import reflex as rx
 
+from ai_code_reviewer.code_parser import parse_code
+from ai_code_reviewer.error_detector_visitor import detect_errors
+from ai_code_reviewer.ai_suggestor import get_ai_suggestions
+
+
+# ---------------------------
 # STATE
+# ---------------------------
+
 class CodeState(rx.State):
+
     code_input: str = ""
     result: str = ""
 
@@ -9,89 +18,101 @@ class CodeState(rx.State):
         self.code_input = value
 
     def analyze_code(self):
-        if self.code_input.strip() == "":
-            self.result = "Please paste Python code."
-        else:
-            self.result = "Code analyzed successfully."
 
-# NAVBAR 
+        if self.code_input.strip() == "":
+            self.result = "⚠ Please paste Python code."
+            return
+
+        # AST Parsing
+        parse_result = parse_code(self.code_input)
+
+        if not parse_result["success"]:
+            self.result = parse_result["error"]
+            return
+
+        ast_feedback = "\n".join(parse_result["feedback"])
+
+        # Error Detection
+        errors = detect_errors(self.code_input)
+        error_feedback = "\n".join(errors)
+
+        # AI Suggestions
+        ai_feedback = get_ai_suggestions(self.code_input)
+
+        # Combine results
+        self.result = f"""
+================ AST ANALYSIS ================
+
+{ast_feedback}
+
+================ ERROR DETECTOR ================
+
+{error_feedback}
+
+================ AI SUGGESTIONS ================
+
+{ai_feedback}
+"""
+
+
+# ---------------------------
+# NAVBAR
+# ---------------------------
+
 def navbar():
+
     return rx.hstack(
+
         rx.hstack(
             rx.icon("cpu"),
-            rx.text("AI Code Reviewer", font_weight="bold", font_size="20px"),
+            rx.text(
+                "AI Code Reviewer",
+                font_weight="bold",
+                font_size="20px"
+            ),
             spacing="2",
         ),
+
         rx.spacer(),
+
         rx.hstack(
             rx.link("Home", href="/"),
             rx.link("Analyze Code", href="/analyze"),
-            rx.link("History", href="/history"),
             rx.link("About", href="/about"),
-            rx.link("Help", href="/help"),
             spacing="6",
         ),
+
         padding="20px",
         width="100%",
+        border_bottom="1px solid #ddd"
     )
 
-# HERO SECTION
-def hero():
-    return rx.center(
-        rx.vstack(
-            rx.badge("AI Powered Analysis", color_scheme="purple"),
 
-            rx.heading(
-                "AI-Driven Code Reviewer System",
-                size="8",
-                text_align="center",
-            ),
-
-            rx.text(
-                "Advanced code review using AST parsing, "
-                "PEP8 validation and AI-based optimization.",
-                text_align="center",
-                color="gray",
-            ),
-
-            rx.hstack(
-                rx.button("95% Accurate"),
-                rx.button("Real-time Analysis", variant="outline"),
-                rx.button("Secure & Reliable", variant="outline"),
-                spacing="4",
-                margin_top="20px",
-            ),
-
-            spacing="6",
-            align="center",
-        ),
-        height="80vh",
-        width="100%",
-        bg="linear-gradient(135deg, #6B73FF 0%, #000DFF 100%)",
-        color="white",
-    )
+# ---------------------------
+# ANALYZER PAGE
+# ---------------------------
 
 def analyzer_page():
+
     return rx.vstack(
 
         navbar(),
 
-        rx.heading("AI Code Analyzer", size="8"),
+        rx.heading(
+            "AI Code Analyzer",
+            size="8"
+        ),
 
-        rx.text("Paste your Python code or upload a file to analyze."),
+        rx.text(
+            "Paste Python code below and click analyze."
+        ),
 
         rx.text_area(
-            placeholder="Paste your code here...",
+            placeholder="Paste your Python code here...",
             value=CodeState.code_input,
             on_change=CodeState.set_code_input,
             width="80%",
             height="300px",
-        ),
-
-        rx.upload(
-            rx.button("Upload Python File"),
-            border="1px dashed gray",
-            padding="1em",
         ),
 
         rx.button(
@@ -106,9 +127,13 @@ def analyzer_page():
         rx.heading("Analysis Result", size="6"),
 
         rx.box(
-            rx.text(CodeState.result),
+            rx.text(
+                CodeState.result,
+                white_space="pre-wrap"
+            ),
             padding="20px",
             border="1px solid #ccc",
+            border_radius="10px",
             width="80%"
         ),
 
@@ -117,27 +142,76 @@ def analyzer_page():
         padding="40px"
     )
 
-# PAGES 
+
+# ---------------------------
+# HOME PAGE
+# ---------------------------
+
 def home():
-    return rx.vstack(
-        navbar(),
-        hero(),
-        spacing="0",
+
+    return rx.center(
+
+        rx.vstack(
+
+            navbar(),
+
+            rx.heading(
+                "AI Driven Code Reviewer",
+                size="9"
+            ),
+
+            rx.text(
+                "Analyze Python code using AST parsing, error detection, and AI suggestions."
+            ),
+
+            rx.button(
+                "Start Code Analysis",
+                on_click=rx.redirect("/analyze"),
+                color_scheme="blue",
+                size="3"
+            ),
+
+            spacing="6",
+            align="center",
+        ),
+
+        height="80vh"
     )
 
-def history():
-    return rx.center(rx.heading("History Page"), height="80vh")
+
+# ---------------------------
+# ABOUT PAGE
+# ---------------------------
 
 def about():
-    return rx.center(rx.heading("About Page"), height="80vh")
 
-def help_page():
-    return rx.center(rx.heading("Help Page"), height="80vh")
+    return rx.center(
 
-# APP 
+        rx.vstack(
+
+            navbar(),
+
+            rx.heading("About This Project"),
+
+            rx.text(
+                "This system analyzes Python code using AST parsing, "
+                "detects possible issues, and provides AI suggestions."
+            ),
+
+            spacing="5",
+            align="center"
+        ),
+
+        height="80vh"
+    )
+
+
+# ---------------------------
+# APP
+# ---------------------------
+
 app = rx.App()
+
 app.add_page(home, route="/")
 app.add_page(analyzer_page, route="/analyze")
-app.add_page(history, route="/history")
 app.add_page(about, route="/about")
-app.add_page(help_page, route="/help")

@@ -2,10 +2,6 @@ import ast
 from typing import Dict, Any
 
 class CodeAnalyzer(ast.NodeVisitor):
-    """
-    Custom AST Analyzer that visits nodes
-    and collects feedback about the code.
-    """
 
     def __init__(self):
         self.feedback = []
@@ -40,13 +36,6 @@ class CodeAnalyzer(ast.NodeVisitor):
 
 
 def parse_code(code: str) -> Dict[str, Any]:
-    """
-    Parses user Python code and returns:
-    - AST tree
-    - Formatted code
-    - AST structure
-    - Basic feedback
-    """
 
     result = {
         "success": False,
@@ -57,16 +46,12 @@ def parse_code(code: str) -> Dict[str, Any]:
     }
 
     try:
-        # Step 1: Parse code into AST
         tree = ast.parse(code)
 
-        # Step 2: Format code 
         formatted_code = ast.unparse(tree)
 
-        # Step 3: Dump AST structure
         ast_structure = ast.dump(tree, indent=4)
 
-        # Step 4: Analyze using NodeVisitor
         analyzer = CodeAnalyzer()
         analyzer.visit(tree)
 
@@ -82,32 +67,3 @@ def parse_code(code: str) -> Dict[str, Any]:
         result["error"] = f"Unexpected Error: {e}"
 
     return result
-
-
-# Example Usage 
-if __name__ == "__main__":
-
-    sample_code = """import math
-def calculate_area(radius):
-    for i in range(3):
-        print(i)
-    return math.pi * radius * radius
-"""
-
-    output = parse_code(sample_code)
-
-    if output["success"]:
-        print("Code Parsed Successfully.\n")
-
-        print("---- Formatted Code ----")
-        print(output["formatted_code"])
-
-        print("\n---- AST Structure ----")
-        print(output["ast_dump"])
-
-        print("\n---- Feedback ----")
-        for item in output["feedback"]:
-            print("-", item)
-
-    else:
-        print("Error:", output["error"])

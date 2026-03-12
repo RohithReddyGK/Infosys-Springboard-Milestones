@@ -1,58 +1,37 @@
 import ast
 
-# Example user code 
-code = """
-import os
-import sys
-from datetime import datetime, timedelta
-
-score = 100
-
-while True:
-    print("Running...")
-
-print(score)
-
-def long_function():
-    print("This is a long function.")
-"""
-
 class ErrorDetector(ast.NodeVisitor):
+
     def __init__(self):
         self.defined_vars = set()
         self.used_vars = set()
         self.imports = set()
-        self.used_imports = set()
         self.infinite_loops = []
         self.long_functions = []
-        self.function_lengths = {}
 
-    # Detect imports
     def visit_Import(self, node):
         for alias in node.names:
-            name = alias.asname if alias.asname else alias.name
-            self.imports.add(name)
+            self.imports.add(alias.name)
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
         for alias in node.names:
-            name = alias.asname if alias.asname else alias.name
-            self.imports.add(name)
+            self.imports.add(alias.name)
         self.generic_visit(node)
 
-    # Detect variable usage
     def visit_Name(self, node):
         if isinstance(node.ctx, ast.Store):
             self.defined_vars.add(node.id)
+
         elif isinstance(node.ctx, ast.Load):
             self.used_vars.add(node.id)
 
         self.generic_visit(node)
 
-    # Detect infinite loops
     def visit_While(self, node):
-        # Case 1: while True
+
         if isinstance(node.test, ast.Constant) and node.test.value is True:
+
             has_break = any(isinstance(n, ast.Break) for n in ast.walk(node))
 
             if not has_break:
@@ -60,74 +39,50 @@ class ErrorDetector(ast.NodeVisitor):
 
         self.generic_visit(node)
 
-    # Detect function length
     def visit_FunctionDef(self, node):
-        start_line = node.lineno
-        end_line = getattr(node, "end_lineno", start_line)
-        length = end_line - start_line + 1
 
-        self.function_lengths[node.name] = length
+        start = node.lineno
+        end = getattr(node, "end_lineno", start)
+        length = end - start + 1
 
         if length > 20:
-            self.long_functions.append((node.name, length, start_line))
+            self.long_functions.append(node.name)
 
         self.generic_visit(node)
 
-    # Final Report
-    def report(self):
-        unused_vars = self.defined_vars - self.used_vars
-        unused_imports = self.imports - self.used_vars
 
-        print("\n================ ERROR DETECTOR REPORT ================\n")
+def detect_errors(code: str):
 
-        # Unused Variables
+    try:
+
+        tree = ast.parse(code)
+
+        detector = ErrorDetector()
+        detector.visit(tree)
+
+        report = []
+
+        unused_vars = detector.defined_vars - detector.used_vars
+        unused_imports = detector.imports - detector.used_vars
+
         if unused_vars:
-            print("⚠️ UNUSED VARIABLE(S) DETECTED:\n")
-            for var in unused_vars:
-                print(f"• Variable '{var}' is defined but never used.")
-                print("  Explanation: The variable is assigned a value but not referenced later in the program.")
-                print("  Suggestion: Remove the variable or use it in your logic.\n")
+            report.append(f"Unused variables: {', '.join(unused_vars)}")
 
-        # Unused Imports 
         if unused_imports:
-            print("⚠️ UNUSED IMPORT(S) DETECTED:\n")
-            for imp in unused_imports:
-                print(f"• Import '{imp}' is not used anywhere in the code.")
-                print("  Explanation: The module is imported but no function or object from it is used.")
-                print("  Suggestion: Remove the unused import to improve code cleanliness and performance.\n")
+            report.append(f"Unused imports: {', '.join(unused_imports)}")
 
-        # Infinite Loops 
-        if self.infinite_loops:
-            print("🚨 INFINITE LOOP DETECTED:\n")
-            for line in self.infinite_loops:
-                print(f"• Infinite loop found at line {line}.")
-                print("  Explanation: The loop condition is always True and there is no 'break' statement.")
-                print("  This means the loop will never terminate on its own.")
-                print("  Suggestion:")
-                print("     - Add a 'break' statement inside the loop, OR")
-                print("     - Change the loop condition to a proper terminating condition.\n")
-        
-        # Long Functions
-        if self.long_functions:
-            print("⚠️ LONG FUNCTION(S) DETECTED:\n")
-            for name, length, line in self.long_functions:
-                print(f"• Function '{name}' starting at line {line} is {length} lines long.")
-                print("  Explanation: Very long functions are harder to maintain and debug.")
-                print("  Suggestion:")
-                print("     - Break the function into smaller helper functions.")
-                print("     - Follow the Single Responsibility Principle.\n")
+        if detector.infinite_loops:
+            report.append("Infinite loop detected")
 
-        if not (unused_vars or unused_imports or self.infinite_loops or self.long_functions):
-            print("No issues detected!\n")
+        if detector.long_functions:
+            report.append("Very long functions detected")
 
-# Execution
-try:
-    tree = ast.parse(code)
-    detector = ErrorDetector()
-    detector.visit(tree)
-    detector.report()
-except SyntaxError as e:
-    print("🚨 SYNTAX ERROR DETECTED")
-    print(f"Line {e.lineno}: {e.msg}")
-    print("Explanation: There is a syntax mistake in your code.")
-    print("Suggestion: Check the indicated line and correct the syntax.")
+        if not report:
+            report.append("No major errors detected.")
+
+        return report
+
+    except Exception as e:
+
+        return [f"Error while analyzing: {str(e)}"]
+    
